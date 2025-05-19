@@ -1,0 +1,21 @@
+name: Build zynthbox-plugin-synthv1-lv2 deb
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'GitLab branch to build'
+        required: false
+        default: 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian:bookworm
+      env:
+        DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Install basic packages
+        run: echo "Install required basic packages"
