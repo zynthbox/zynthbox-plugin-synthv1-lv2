@@ -19,4 +19,6 @@ jobs:
 
       - name: Build DEB using Debhelper
         run: |
+          pwd
+          tree
           dpkg-buildpackage -us -uc
