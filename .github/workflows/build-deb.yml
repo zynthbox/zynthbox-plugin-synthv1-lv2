@@ -23,6 +23,5 @@ jobs:
           apt-get install -y build-essential devscripts debhelper lintian
 
       - name: Build DEB using Debhelper
-        working-directory: myapp
         run: |
           dpkg-buildpackage -us -uc
