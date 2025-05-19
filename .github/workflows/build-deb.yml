@@ -2,11 +2,6 @@ name: Build zynthbox-plugin-synthv1-lv2 deb
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'GitLab branch to build'
-        required: false
-        default: 'main'
 
 jobs:
   build:
