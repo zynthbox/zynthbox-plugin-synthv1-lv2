@@ -15,7 +15,7 @@ jobs:
       - name: Install build dependencies
         run: |
           apt-get update
-          apt-get install -y build-essential devscripts debhelper lintian
+          apt-get install -y build-essential devscripts debhelper lintian tree
 
       - name: Build DEB using Debhelper
         run: |
