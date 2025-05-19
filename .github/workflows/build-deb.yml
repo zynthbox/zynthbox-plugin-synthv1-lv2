@@ -17,6 +17,8 @@ jobs:
           apt-get update
           apt-get install -y build-essential devscripts debhelper lintian tree
 
+      - uses: actions/checkout@v2
+      
       - name: Build DEB using Debhelper
         run: |
           pwd
