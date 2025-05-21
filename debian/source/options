@@ -19,5 +19,8 @@ extend-diff-ignore = ".*.pyc"
 # Ignore all `.gitlab-ci.yml`
 extend-diff-ignore = ".gitlab-ci.yml"
 
+# Ignore everything under .github
+extend-diff-ignore = ^\.github/
+
 # Ignore all `README` files
 extend-diff-ignore = "README|README.md"
