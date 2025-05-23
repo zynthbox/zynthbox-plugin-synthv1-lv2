@@ -37,8 +37,8 @@ jobs:
           set -x
           echo "Updating repository info"
           apt update
-          echo "Installing SSH Client"
-          apt install -yy openssh-client\
+          # echo "Installing SSH Client"
+          # apt install -yy openssh-client
 
           # echo "Ensuring key security"
           # chmod 600 ${{ secrets.APTLY_SSH_KEY }}
