@@ -59,8 +59,7 @@ jobs:
           echo "Adding package(s) to repository"
 
           if [ "$RELEASE" = "bookworm" ]; then
-            ls -l
-            for pkg in $(ls -1 *.deb)
+            for pkg in $(ls -1 ../*.deb)
               do
                 echo "Adding ${pkg}"
                 ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa aptly@repo.zynthbox.io 'aptly repo add -remove-files '"${APTLY_REPO}-bookworm"' /mnt/pub_zynthbox_io_volume/temp/${pkg}'
