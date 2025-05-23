@@ -38,9 +38,10 @@ jobs:
           echo "Updating repository info"
           apt update
           echo "Installing SSH Client"
-          apt install -yy openssh-client
-          echo "Ensuring key security"
-          chmod 600 ${{ secrets.APTLY_SSH_KEY }}
+          apt install -yy openssh-client\
+
+          # echo "Ensuring key security"
+          # chmod 600 ${{ secrets.APTLY_SSH_KEY }}
 
           ### Make the aptly jobs wait on a global lock file so that the aptly jobs are mutually exclusive
           ### Create a lock file /tmp/publish-aptly-zynthbox.lock and cleanup before completing the job
