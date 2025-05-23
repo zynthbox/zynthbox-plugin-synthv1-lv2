@@ -103,8 +103,6 @@ jobs:
           apt-get -y build-dep .
 
           dpkg-buildpackage -us -uc
-          pwd
-          tree ../
 
       - name: Upload deb to aptly repo
         run: |
