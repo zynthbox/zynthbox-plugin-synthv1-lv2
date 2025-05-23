@@ -38,6 +38,11 @@ jobs:
           echo "Updating repository info"
           apt update
 
+          mkdir -p ~/.ssh
+          echo "${{ secrets.APTLY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan repo.zynthbox.io >> ~/.ssh/known_hosts
+
           ### Make the aptly jobs wait on a global lock file so that the aptly jobs are mutually exclusive
           ### Create a lock file /tmp/publish-aptly-zynthbox.lock and cleanup before completing the job
           echo "Checking if /tmp/publish-aptly-zynthbox.lock exists"
