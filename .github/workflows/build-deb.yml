@@ -29,9 +29,17 @@ jobs:
         run: |
           PACKAGE_NAME=$(dpkg-parsechangelog --show-field Source)
           PACKAGE_VERSION=$(dpkg-parsechangelog --show-field Version | sed 's/-[^-]*$//')
+
+          # Keep the debian folder backup
+          mv debian debian.bkup
+
           wget -O ../${PACKAGE_NAME}_${PACKAGE_VERSION}.orig.tar.gz https://github.com/zynthbox/zynthbox-dependencies/releases/download/RC-5/synthv1-lv2-1.3.0.tar.gz
           tar -xf ../${PACKAGE_NAME}_${PACKAGE_VERSION}.orig.tar.gz -C ./ --strip-components=1
 
+          rm -rf debian
+          mv debian.bkup debian
+
+          
       - name: Build DEB using Debhelper
         run: |
           set -x
@@ -92,7 +100,6 @@ jobs:
           echo "unsigned-buildinfo" >> /etc/dpkg/buildpackage.conf
           echo "unsigned-changes" >> /etc/dpkg/buildpackage.conf
           set +x
-
 
 
           dpkg-buildpackage -us -uc
