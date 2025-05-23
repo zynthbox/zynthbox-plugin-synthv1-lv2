@@ -3,12 +3,6 @@ name: Build zynthbox-plugin-synthv1-lv2 deb
 on:
   workflow_dispatch:
 
-env:
-  APTLY_REPO: testing
-  RELEASE: bookworm
-  BUILDING_ZYNTHBOX_DEPENDENCY: 1
-  SKIP_ZYNTHBOX_DEPENDENCIES_INSTALLATION: 0
-
 jobs:
   build:
     runs-on: ubuntu-22.04-arm
@@ -16,6 +10,10 @@ jobs:
       image: debian:bookworm
       env:
         DEBIAN_FRONTEND: noninteractive
+        APTLY_REPO: testing
+        RELEASE: bookworm
+        BUILDING_ZYNTHBOX_DEPENDENCY: 1
+        SKIP_ZYNTHBOX_DEPENDENCIES_INSTALLATION: 0
 
     steps:
       - name: Install build dependencies
@@ -102,7 +100,7 @@ jobs:
           set +x
 
           # Install the build dependencies reading the Build-Depends in the debian/control file
-          apt-get build-dep .
+          apt-get -y build-dep .
 
           dpkg-buildpackage -us -uc
           pwd
