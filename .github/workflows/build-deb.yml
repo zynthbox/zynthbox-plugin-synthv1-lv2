@@ -3,6 +3,10 @@ name: Build zynthbox-plugin-synthv1-lv2 deb
 on:
   workflow_dispatch:
 
+env:
+  APTLY_REPO: testing
+  RELEASE: bookworm
+
 jobs:
   build:
     runs-on: ubuntu-22.04-arm
@@ -53,8 +57,6 @@ jobs:
           echo "Uploading debs"
           scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ../*.deb aptly@repo.zynthbox.io:/mnt/pub_zynthbox_io_volume/temp/
           echo "Adding package(s) to repository"
-          
-          APTLY_REPO="testing"
 
           if [ "$RELEASE" = "bookworm" ]; then
             ls -l
