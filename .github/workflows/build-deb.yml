@@ -101,6 +101,8 @@ jobs:
           echo "unsigned-changes" >> /etc/dpkg/buildpackage.conf
           set +x
 
+          # Install the build dependencies reading the Build-Depends in the debian/control file
+          apt-get build-dep .
 
           dpkg-buildpackage -us -uc
           pwd
