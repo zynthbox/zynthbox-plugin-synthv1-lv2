@@ -6,6 +6,8 @@ on:
 env:
   APTLY_REPO: testing
   RELEASE: bookworm
+  BUILDING_ZYNTHBOX_DEPENDENCY: 1
+  SKIP_ZYNTHBOX_DEPENDENCIES_INSTALLATION: 0
 
 jobs:
   build:
@@ -32,6 +34,67 @@ jobs:
 
       - name: Build DEB using Debhelper
         run: |
+          set -x
+          apt-get -y update
+          apt-get -y --no-install-recommends install gnupg2 curl wget sudo openssh-client
+
+          # Ensuring key security
+          mkdir -p ~/.ssh
+          echo "${{ secrets.APTLY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan repo.zynthbox.io >> ~/.ssh/known_hosts
+
+          # Zynthbox repo
+          curl -L https://repo.zynthbox.io/repo_key.pub | apt-key add -;
+          if [ "$RELEASE" = "bookworm" ]; then
+            echo "deb https://repo.zynthbox.io/testing-bookworm/ bookworm main" | tee "/etc/apt/sources.list.d/zynthbox.list"
+            echo "deb https://repo.zynthbox.io/kxstudio/ bookworm main" | tee "/etc/apt/sources.list.d/zynthbox-kxstudio.list"
+            echo "deb https://repo.zynthbox.io/deb-multimedia/ bookworm main" | tee "/etc/apt/sources.list.d/zynthbox-debmultimedia.list"
+          else
+            echo "UNKNOWN RELEASE $RELEASE"
+          fi
+
+          # lv2-dev package from kxstudio is missing header files. Give priority to deb-multimedia one when installing and make sure kxstudio one never gets installed
+          echo "Package: lv2-dev" >> /etc/apt/preferences.d/lv2-dev
+          echo "Pin: origin www.deb-multimedia.org" >> /etc/apt/preferences.d/lv2-dev
+          echo "Pin-Priority: 1001" >> /etc/apt/preferences.d/lv2-dev
+          echo "" >> /etc/apt/preferences.d/lv2-dev
+          echo "Package: lv2-dev" >> /etc/apt/preferences.d/lv2-dev
+          echo "Pin: origin ppa.launchpad.net" >> /etc/apt/preferences.d/lv2-dev
+          echo "Pin-Priority: 1" >> /etc/apt/preferences.d/lv2-dev
+          echo "" >> /etc/apt/preferences.d/lv2-dev
+
+          ### Make the aptly jobs wait on a global lock file so that the aptly jobs are mutually exclusive
+          ### Create a lock file /tmp/publish-aptly-zynthbox.lock and cleanup before completing the job
+          echo "Checking if /tmp/publish-aptly-zynthbox.lock exists"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa aptly@repo.zynthbox.io 'while [ -f /tmp/publish-aptly-zynthbox.lock ]; do echo "/tmp/publish-aptly-zynthbox.lock exists. Waiting for other publish jobs to finish first"; sleep 5; done'
+
+          apt-get -y update
+          # If BUILDING_ZYNTHBOX_DEPENDENCY is set to 1 then install a bunch of packages required for building the dependencies or plugins
+          if [ "$BUILDING_ZYNTHBOX_DEPENDENCY" -eq 1 ]; then
+            # Do not install zynthbox dependency packages if set to 1
+            if [ "$SKIP_ZYNTHBOX_DEPENDENCIES_INSTALLATION" -eq 0 ]; then
+              apt-get -y --no-install-recommends install build-essential git swig subversion pkg-config autoconf automake premake4 gettext intltool libtool libtool-bin cmake cmake-curses-gui flex bison ngrep qt5-qmake gobjc++ ruby rake xsltproc vorbis-tools zenity ffmpeg libavformat-dev libavcodec-dev libfftw3-dev libmxml-dev zlib1g-dev fluid libfltk1.3-dev libfltk1.3-compat-headers libncurses5-dev liblo-dev dssi-dev libjpeg-dev libxpm-dev libcairo2-dev libglu1-mesa-dev libasound2-dev dbus-x11 jackd2 libjack-jackd2-dev a2jmidid libffi-dev fontconfig-config libfontconfig1-dev libxft-dev libexpat-dev libglib2.0-dev libgettextpo-dev libsqlite3-dev libglibmm-2.4-dev libeigen3-dev libsndfile-dev libsamplerate-dev libarmadillo-dev libreadline-dev lv2-c++-tools libxi-dev libgtk2.0-dev libgtkmm-2.4-dev liblrdf-dev libboost-system-dev libzita-convolver-dev libzita-resampler-dev fonts-roboto libxcursor-dev libxinerama-dev mesa-common-dev libgl1-mesa-dev libfreetype6-dev libswscale-dev qtbase5-dev qtdeclarative5-dev libcanberra-gtk-module libcanberra-gtk3-module libxcb-cursor-dev libgtk-3-dev libxcb-util0-dev libxcb-keysyms1-dev libxcb-xkb-dev libxkbcommon-x11-dev libssl-dev python3 python-is-python3 python3-dev cython3 python3-cffi python3-tk python3-dbus python3-mpmath python3-pil python3-pil.imagetk python3-setuptools python3-pyqt5 python3-numpy python3-evdev 2to3 python3-pip libfreetype-dev meson extra-cmake-modules tree
+            fi
+          fi
+
+          # Set C/CXX FLAGS to optimize builds for RPI4
+          export CFLAGS="-ftree-vectorize -O2 -pipe -fomit-frame-pointer"
+          export CXXFLAGS="${CFLAGS}"
+          export CFLAGS_UNSAFE=""
+
+          # Create world writable gnupg home
+          export GNUPGHOME=$(mktemp -d /tmp/.gnupgXXXXXX)
+          chmod 777 $GNUPGHOME
+
+          # Create dpkg-buildpackage config to disable signing of source, build and changes files when generating debs
+          echo "unsigned-source" >> /etc/dpkg/buildpackage.conf
+          echo "unsigned-buildinfo" >> /etc/dpkg/buildpackage.conf
+          echo "unsigned-changes" >> /etc/dpkg/buildpackage.conf
+          set +x
+
+
+
           dpkg-buildpackage -us -uc
           pwd
           tree ../
